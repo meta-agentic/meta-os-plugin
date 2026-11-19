@@ -1,0 +1,5 @@
+#!/bin/sh
+# meta-os hook stub. Enable per clone: git config core.hooksPath .githooks
+# Add this instance's own hooks in .githooks.d/pre-commit/ and leave this file as it is.
+top=$(git rev-parse --show-toplevel) || exit 1
+exec "$top/.meta-os/git-hook" pre-commit "$@"

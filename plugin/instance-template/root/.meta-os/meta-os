@@ -1,0 +1,14 @@
+#!/bin/sh
+# meta-os launcher. Git hooks, scheduled jobs and scripts call this file, never a path inside the
+# plugin: the plugin's folder moves at every update. It finds the installed plugin for this
+# instance and runs the named command from the instance's root folder.
+here=$(cd "$(dirname "$0")" && pwd) || exit 1
+top=$(dirname "$here")
+cd "$top" || exit 1
+found=$(python3 "$here/resolver.py" root) || {
+  echo "meta-os: the meta-os plugin was not found for this instance." >&2
+  echo "meta-os: install it in Claude Code, or set META_OS_PLUGIN_ROOT to a checkout of its plugin folder." >&2
+  exit 3
+}
+root=$(printf '%s\n' "$found" | cut -f1)
+exec "$root/bin/meta-os" "$@"

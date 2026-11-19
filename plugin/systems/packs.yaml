@@ -1,0 +1,49 @@
+# The packs the meta-os plugin knows by name. Each is a Claude Code plugin from the meta-agentic
+# marketplace (repository meta-agentic/meta-disciplines); `/meta-os:init` offers them and records
+# the chosen ones in the instance's .packs.yaml. Contract and curation bar: packs.md, beside this file.
+# Keep entries flat (name, then fields at four spaces): it is read without a YAML library.
+#   plugin        the id to install: <plugin>@<marketplace>
+#   renamed-from  the keys a pack used to have, so settings written under one are still recognised
+#   provides      the skill names other packs may depend on
+#   depends       the packs whose skills this pack assumes
+version: 2
+
+packs:
+  meta-discipline-agile:
+    renamed-from: [agile]
+    plugin: meta-discipline-agile@meta-agentic
+    description: "Agile delivery discipline (3 skills): agile-process (backlog of record, ceremonies, transitions — transition ledger), agile-swarm (multi-lane sprint execution — lane ledger) and story-estimation (two-axis extension/intension sizing — estimate ledger). First-party, extracted from the framework core."
+    provenance: first-party
+    license: MIT
+    provides: [agile-process, agile-swarm, story-estimation]
+
+  meta-discipline-agents:
+    renamed-from: [agents]
+    plugin: meta-discipline-agents@meta-agentic
+    description: "Agent engineering discipline (7 skills): agent-architecture (the refusal test, the escalation ladder, pattern selection — agent decision record), agent-prompting (prompt as versioned code — prompt version record), agent-skills (declarative procedures, Clarify-Execute-Verify — skill review record), agent-harness (model proposes, code disposes — harness contract), agent-safety (guardrails, threat model, least privilege — threat & permission ledger), agent-evaluation (trajectory grading, CI gates — eval report) and loop-engineering (machine-checkable termination, unattended operation, the self-improving harness — loop charter). Parameterized on an autonomy profile. First-party."
+    provenance: first-party
+    license: MIT
+    provides: [agent-architecture, agent-prompting, agent-skills, agent-harness, agent-safety, agent-evaluation, loop-engineering]
+
+  meta-discipline-swe:
+    renamed-from: [software-engineering]
+    plugin: meta-discipline-swe@meta-agentic
+    description: "Software-engineering discipline as judgment, not process. Ships constrained-generation (make LLM generation reliable by restricting what may be emitted — DSL/schema/typed API — behind a four-condition gate whose default answer is no, plus a validator-closed repair loop); design principles applied in review context (SOLID/GRASP, composition), ADR discipline and design reviews follow. First-party."
+    provenance: first-party
+    license: MIT
+
+  meta-discipline-math:
+    renamed-from: [advanced-math]
+    plugin: meta-discipline-math@meta-agentic
+    description: "Advanced-mathematics discipline (12 skills): a rigor spine (mathematical-rigor, dimensional-analysis, hypercomplex-and-geometric-algebra) plus per-branch disciplines — calculus-and-analysis, linear-algebra, probability-and-statistics, number-theory, discrete-mathematics, differential-equations, abstract-algebra, complex-analysis, geometry-and-trigonometry — each emitting a checkable ledger. First-party; the quantitative-rigor wedge from pack-strategy."
+    provenance: first-party
+    license: MIT
+    provides: [dimensional-analysis, mathematical-rigor]
+
+  meta-discipline-physics:
+    renamed-from: [physics]
+    plugin: meta-discipline-physics@meta-agentic
+    description: "Physics discipline (16 skills): a method spine (symmetry & conservation, limiting cases, order-of-magnitude, model-building, experimental error), branch disciplines (classical mechanics, electromagnetism, waves, quantum, statistical mechanics & thermodynamics, relativity), and a high-energy tier (QFT, particle physics & the Standard Model, relativistic kinematics, accelerator physics, cosmology) — each emitting a checkable ledger. First-party."
+    provenance: first-party
+    license: MIT
+    depends: [meta-discipline-math]

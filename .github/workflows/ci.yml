@@ -1,0 +1,157 @@
+# Checks every push to main and every pull request: the public-safe gate, the tests on the
+# Python floor and on the newest Python, strict validation of the plugin and of the
+# marketplace file, and, on a pull request, that a change under plugin/ raises the version.
+#
+# It is also the body of a release: release.yml calls this file with `release: true`, and
+# the `release` job below then runs after every check has passed. One file, so a release is
+# checked by exactly what checks a pull request, with the same versions.
+#
+# Declared once, here and nowhere else:
+#   the runner   `runs-on` reads the repository variable CI_RUNNER. While the repository is
+#                private the variable is `self-hosted`; once it is public the variable is
+#                deleted and the standard runner below is used. A public repository must not
+#                run pull requests on a self-hosted runner.
+#   versions     Python in the matrix; the tools in `env`; each action at its one `uses:`.
+#                A step the release needs again is named once (`&name`) and reused (`*name`).
+name: ci
+
+"on":
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call:
+    inputs:
+      release:
+        description: Tag and push a release after the checks.
+        type: boolean
+        default: false
+      version:
+        description: The version to release, X.Y.Z. Empty keeps the manifest's.
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  UV_VERSION: "0.13.9"
+  NODE_VERSION: "24.22.0"
+  CLAUDE_CODE_VERSION: "2.1.328"
+
+jobs:
+  check:
+    name: Python ${{ matrix.python }}
+    runs-on: &runner ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - python: "3.9"        # the floor the plugin promises
+          - python: "3.14"       # the newest stable Python
+            validate: true       # strict validation runs once, on this row
+    steps:
+      - &checkout
+        name: Check out, with history for the gate and the release tags
+        uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+
+      # uv brings the named Python to any runner, self-hosted included, without a tool cache.
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v10.3.3
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: false
+
+      - name: Public-safe gate (files)
+        run: uv run --no-project --python "${{ matrix.python }}" python scripts/public_safe_gate.py tree
+
+      - name: Public-safe gate (commit messages and addresses)
+        run: uv run --no-project --python "${{ matrix.python }}" python scripts/public_safe_gate.py history
+
+      # `claude plugin update` does nothing for a user when the version did not move.
+      - name: Plugin version against the last release
+        if: github.event_name == 'pull_request'
+        run: >-
+          uv run --no-project --python "${{ matrix.python }}" python scripts/plugin_version.py
+          check --base "origin/${{ github.base_ref }}"
+
+      - &node
+        name: Set up Node (for the Claude Code CLI)
+        if: matrix.validate
+        uses: actions/setup-node@v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      # Installed into the job's temporary folder, so a self-hosted runner's own Claude Code
+      # is neither used nor changed. Validation reads files only and needs no credentials.
+      - &claude
+        name: Install the Claude Code CLI
+        if: matrix.validate
+        run: |
+          npm install --no-save --no-audit --no-fund --prefix "$RUNNER_TEMP/claude-code" \
+            "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}"
+          # The package's own post-install step, run by name: a runner whose npm skips
+          # install scripts would otherwise be left without the binary.
+          node "$RUNNER_TEMP/claude-code/node_modules/@anthropic-ai/claude-code/install.cjs"
+          echo "CLAUDE_BIN=$RUNNER_TEMP/claude-code/node_modules/.bin/claude" >> "$GITHUB_ENV"
+          echo "META_OS_REQUIRE_CLAUDE=1" >> "$GITHUB_ENV"
+
+      - name: Strict validation of the plugin
+        if: matrix.validate
+        run: |
+          "$CLAUDE_BIN" plugin validate plugin --strict
+
+      - name: Strict validation of the marketplace file
+        if: matrix.validate
+        run: |
+          "$CLAUDE_BIN" plugin validate . --strict
+
+      # Includes: init into an empty folder, then doctor on the result.
+      - name: Tests
+        run: uv run --no-project --python "${{ matrix.python }}" python tests/run.py
+
+  # Only when release.yml calls this file. The tag is what the marketplace entry names, so it is
+  # made here, after the checks, and never by hand. When the version asked for is not the
+  # manifest's, the tagged commit is one commit ahead of main and carries the new version; main
+  # itself is never pushed to, and takes the version with the next pull request.
+  release:
+    name: Release
+    if: inputs.release
+    needs: check
+    runs-on: *runner
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    strategy:
+      matrix:
+        validate: [true]         # the steps shared with `check` run where this is true
+    steps:
+      - *checkout
+      - *node
+      - *claude
+
+      - name: Set the version, validate, tag and push the tag
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "A release is made from main, not from $GITHUB_REF." >&2
+            exit 1
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # Refuses a version that is not above the last release tag.
+          version=$(python3 scripts/plugin_version.py set "$VERSION")
+          if ! git diff --quiet; then
+            git commit --quiet --all --message "chore(release): meta-os $version"
+          fi
+          "$CLAUDE_BIN" plugin validate plugin --strict
+          "$CLAUDE_BIN" plugin validate . --strict
+          # Creates the annotated tag meta-os--v<version> from the manifest and pushes it.
+          "$CLAUDE_BIN" plugin tag plugin --message "meta-os %s" --push

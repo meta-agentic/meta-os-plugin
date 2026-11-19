@@ -1,0 +1,15 @@
+{
+  "name": "meta-os-preview",
+  "description": "Installs the meta-os plugin from its build repository while it is a preview and not yet listed in the meta-agentic marketplace.",
+  "owner": {
+    "name": "meta-agentic"
+  },
+  "plugins": [
+    {
+      "name": "meta-os",
+      "description": "An agentic operating layer for Claude Code and Obsidian. Preview.",
+      "source": "./plugin",
+      "category": "framework"
+    }
+  ]
+}

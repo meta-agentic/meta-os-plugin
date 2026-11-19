@@ -1,0 +1,197 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/meta-agentic/meta-os/blob/main/systems/meta-os.config.schema.json",
+  "title": "meta-os.config.json — instance estate configuration",
+  "description": "Schema for a meta-os instance's estate config (meta-os.config.json): the estate knowledge an adopter declares — variable prefixes, backlog mirrors, and memory topology. This is the FRAMEWORK level: valid keys, valid enum values, and defaults, carrying ZERO values. Deployment concerns (instanceRoot, frameworkRoot, github.*, auth, corsOrigins, claudeHome, dataDir) live in the dashboard's instance.config.json, not here. Every key is optional; omitting the file yields default behaviour. The `instance` block is the one key the framework writes (at bootstrap) rather than the adopter.",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "instance": {
+      "type": "object",
+      "description": "The record `meta-os init` writes on first run. name: the instance's name. initialized: the date of the first run, YYYY-MM-DD.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+        },
+        "initialized": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        }
+      },
+      "required": [
+        "name",
+        "initialized"
+      ],
+      "additionalProperties": false
+    },
+    "acknowledgedPluginVersion": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "description": "The meta-os plugin version this instance was set up with or last acknowledged."
+    },
+    "hooks": {
+      "type": "object",
+      "description": "The instance's git hooks. strict: refuse a commit when the plugin cannot be found; false warns and passes.",
+      "properties": {"strict": {"type": "boolean", "default": false}},
+      "additionalProperties": false
+    },
+    "publicRepoGate": {
+      "type": "object",
+      "description": "The instance's settings for scripts/public_repo_gate.py: what counts as instance data in a public repository. Every key is optional; omitted, the framework's key shape and home-path check apply.",
+      "properties": {
+        "keyPattern": {"type": "string", "description": "Regex matching this instance's tracker keys; replaces the framework's generic key shape."},
+        "allowedTokens": {"type": "array", "items": {"type": "string"}, "description": "Exact tokens that match the key pattern and are not keys, added to the framework's allow-list."},
+        "exemptRepos": {"type": "array", "items": {"type": "string"}, "description": "OWNER/NAME of public repositories whose text carries tracker keys by design; machine paths are still checked there."},
+        "pathPrefixes": {"type": "array", "items": {"type": "string"}, "description": "Absolute path prefixes that are instance data, besides any home path."}
+      },
+      "additionalProperties": false
+    },
+    "swarm": {
+      "type": "object",
+      "description": "The autonomous pipeline's bounds, quiet timers and identities (systems/pipeline.md). The loop reads these and never writes them; prompts and repository routing stay in the pipeline's own configuration file. Every key is optional; omitted, the default applies.",
+      "properties": {
+        "lanes": {"type": "integer", "description": "m_max: the lane slots. The sizing rule gives 5; a proof of concept uses 3.", "default": 5, "minimum": 1},
+        "min_lanes": {"type": "integer", "description": "m_min: the fewest working lanes the regulator keeps while the pipe runs.", "default": 1, "minimum": 1},
+        "tokens": {"type": "integer", "description": "N: the CONWIP cap, items from start until DONE or NO GO. Set by a human from the sizing; default twice `lanes`.", "minimum": 1},
+        "fairness_share": {"type": "number", "description": "The largest share of the tokens one space may hold.", "default": 0.5, "minimum": 0, "maximum": 1},
+        "automerge_classes": {"type": "array", "items": {"type": "string"}, "default": [], "description": "Change classes that merge without the human station: docs-only, tests-only. A name without a classifier never matches; empty turns the tier off."},
+        "review_sla_days": {"type": "number", "description": "The review-age limit: a space whose oldest item in review is older takes no new work.", "default": 5, "minimum": 0},
+        "review_queue_cap": {"type": "integer", "description": "The most items one space may hold in review before it takes no new work.", "default": 4, "minimum": 1},
+        "lane_budget": {"type": "number", "description": "A run's cap, as a multiple of its expected cost; over it the run is interrupted and given back.", "default": 3, "minimum": 1},
+        "max_retries": {"type": "integer", "description": "How many times an item may be given back before it is no longer admissible.", "default": 2, "minimum": 0},
+        "reserves": {
+          "type": "object",
+          "description": "The fraction of each usage window's allowance never spent.",
+          "properties": {
+            "five_hour": {"type": "number", "description": "Reserve of the 5-hour window.", "default": 0.15, "minimum": 0, "maximum": 1},
+            "week": {"type": "number", "description": "Reserve of the weekly window.", "default": 0.1, "minimum": 0, "maximum": 1}
+          },
+          "additionalProperties": false
+        },
+        "mileage_readings": {"type": "integer", "description": "The span, in budget readings, of the per-window mileage average.", "default": 6, "minimum": 1},
+        "stall_minutes": {"type": "number", "description": "The quiet timer: a step with no progress (no exit, its log unchanged) for this long is killed and reaped; also the sentinel's limit for an unconsumed event.", "default": 5, "exclusiveMinimum": 0},
+        "max_stale_reaps": {"type": "integer", "description": "Reaps of the same item before it is held for a human.", "default": 2, "minimum": 1},
+        "unattended_after_minutes": {"type": "number", "description": "A question to the human unanswered this long switches the pipe to unattended.", "default": 30, "exclusiveMinimum": 0},
+        "remote_poll_seconds": {"type": "integer", "description": "The remote watcher's interval, the one poll in the design; it only writes events.", "default": 60, "minimum": 1},
+        "build_slots": {"type": "integer", "description": "Full builds the runner runs at once on one machine.", "default": 1, "minimum": 1},
+        "executable_spaces": {"type": "array", "items": {"type": "string"}, "default": [], "description": "The spaces whose items the pipeline may start. Empty: none."},
+        "record_repository": {
+          "type": "object",
+          "description": "The private repository the loop writes its state, plans, results and events to; never the framework, never a place for secrets.",
+          "properties": {
+            "url": {"type": "string", "description": "Its remote."},
+            "path": {"type": "string", "description": "The local clone the loop writes and a local dashboard reads."}
+          },
+          "additionalProperties": false
+        },
+        "planner": {
+          "type": "object",
+          "description": "The planner port.",
+          "properties": {
+            "adapter": {"type": "string", "enum": ["command", "reasoning"], "default": "reasoning", "description": "`command` runs the configured command and falls back to reasoning on failure; `reasoning` orders the admissible set itself."},
+            "command": {"type": "array", "items": {"type": "string"}, "description": "The planner command and its arguments, for the `command` adapter."},
+            "repair_max_items": {"type": "integer", "description": "A change touching at most this many items, or one lane, is repaired rather than solved cold.", "default": 5, "minimum": 0},
+            "churn_cap": {"type": "integer", "description": "A repair whose edit distance exceeds this is discarded for a cold solve.", "default": 10, "minimum": 0},
+            "repair_timeout_seconds": {"type": "number", "description": "Time allowed for a repair before the pass plans by reasoning.", "default": 30, "minimum": 1},
+            "cold_timeout_seconds": {"type": "number", "description": "Time allowed for a cold solve before the pass plans by reasoning.", "default": 90, "minimum": 1}
+          },
+          "additionalProperties": false
+        },
+        "dashboard_controls": {"type": "boolean", "default": false, "description": "Render the Pipeline tab's controls on a dashboard reading a local source. A hosted or GitHub-sourced dashboard never offers them."},
+        "visibility_probe": {"type": "boolean", "default": false, "description": "Probe each run's repository through scripts/public_repo_gate.py; one not proven private gets a key-free branch, the public note and no item id in the PR title."}
+      },
+      "additionalProperties": false
+    },
+    "vars": {
+      "type": "object",
+      "description": "Reusable string prefixes. ${name} in any config value (or a projects/*.md 'path:') expands to these, so a repo-root move is a one-line change.",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "backlogs": {
+      "type": "array",
+      "description": "Backlog mirrors this instance tracks, one per space/project.",
+      "items": {
+        "type": "object",
+        "required": [
+          "space",
+          "path"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "space": {
+            "type": "string",
+            "description": "Space/project key (e.g. the tracker project id)."
+          },
+          "path": {
+            "type": "string",
+            "description": "Backlog source — a per-item raw/ directory (post-migration) or a legacy backlog.json. ${var} expands."
+          }
+        }
+      }
+    },
+    "memory": {
+      "type": "object",
+      "description": "Configurable memory topology. Omit the whole block for the default: the instance's own memory/{raw,wiki,output} as the sole canon root plus vaults/* as federated mounts (byte-for-byte the prior behaviour). ${var} expands in paths. A broken/dangling path is skipped and reported, never fatal.",
+      "additionalProperties": false,
+      "properties": {
+        "roots": {
+          "type": "array",
+          "description": "Canon roots — counted AS the raw->wiki->output pipeline (promotable). Each declares a layout.",
+          "items": {
+            "type": "object",
+            "required": [
+              "label",
+              "path",
+              "layout"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "label": {
+                "type": "string",
+                "description": "Human label, e.g. \"instance\" or \"estate\"."
+              },
+              "path": {
+                "type": "string",
+                "description": "Root path. ${var} expands."
+              },
+              "layout": {
+                "type": "string",
+                "enum": [
+                  "flat",
+                  "tier/project",
+                  "project/tier"
+                ],
+                "description": "flat = {raw,wiki,output} at the root. tier/project = {raw,wiki,output}/<project> — favours cross-project browsing on a directly-read root. project/tier = <project>/{raw,wiki,output} — favours per-project ownership and clean extraction, and is REQUIRED when the root is federated one-symlink-per-project (a project must map to a single mountable directory)."
+              }
+            }
+          }
+        },
+        "federated": {
+          "type": "array",
+          "description": "Federated mounts — surfaced in the graph for navigation/context, NEVER counted as canon.",
+          "items": {
+            "type": "object",
+            "required": [
+              "label",
+              "path"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "label": {
+                "type": "string",
+                "description": "Human label for the mount."
+              },
+              "path": {
+                "type": "string",
+                "description": "Mount source path. ${var} expands."
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

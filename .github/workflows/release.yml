@@ -1,0 +1,35 @@
+# Releases the plugin: one manual run, no hand steps.
+#
+#   gh workflow run release.yml                    releases the version the manifest on main has
+#   gh workflow run release.yml -f version=0.3.0   writes that version into the manifest first
+#
+# It runs every check of ci.yml, then writes the version into plugin/.claude-plugin/plugin.json
+# if it differs, validates strictly, and creates and pushes the tag `meta-os--v<version>` with
+# `claude plugin tag`. The marketplace entry names that tag.
+#
+# Started by hand and not by a pushed tag: a tag pushed first would be made by hand, before
+# anything had validated the commit it names, and a published tag cannot be taken back. Here
+# the tag exists only after the checks have passed, and nothing but this workflow makes one.
+#
+# The steps, the runner and every version are in ci.yml; nothing is declared twice.
+name: release
+
+"on":
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "The version to release, X.Y.Z. Empty: the version the manifest on main already has."
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    uses: ./.github/workflows/ci.yml
+    permissions:
+      contents: write
+    with:
+      release: true
+      version: ${{ inputs.version }}

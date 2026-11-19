@@ -1,0 +1,28 @@
+# OS noise
+.DS_Store
+*.swp
+
+# Obsidian per-machine state (the settings and the plugin list are kept)
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+.obsidian/cache
+
+# Secrets: never commit
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+
+# Claude Code: the contract, the settings and this instance's own skills are tracked; machine-local files are not
+.claude/*
+!.claude/CLAUDE.md
+!.claude/settings.json
+!.claude/skills/
+
+# Operational data: machine-local, never canon
+automations/runs.jsonl
+
+# Python caches
+__pycache__/
+*.pyc

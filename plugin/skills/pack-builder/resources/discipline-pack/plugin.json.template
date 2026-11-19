@@ -1,0 +1,10 @@
+{
+  "name": "meta-discipline-<pack>",
+  "version": "0.1.0",
+  "description": "<The pack.yaml description, trimmed to one sentence.>",
+  "author": {
+    "name": "<author or organisation>"
+  },
+  "license": "MIT",
+  "keywords": ["meta-os", "discipline", "<domain>"]
+}

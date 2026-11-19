@@ -1,0 +1,28 @@
+#!/bin/sh
+# meta-os git hook body, called by the stubs in .githooks/ as: git-hook <hook name> [hook arguments].
+# It runs the plugin's check for the hook, then this instance's own hooks in .githooks.d/<hook>/.
+# Without the plugin it warns and goes on, unless the instance is strict (see .githooks.d/README.md).
+hook=${1:?usage: git-hook <hook name> [arguments]}
+shift
+here=$(cd "$(dirname "$0")" && pwd) || exit 1
+top=$(dirname "$here")
+cd "$top" || exit 1
+found=$(python3 "$here/resolver.py" root 2>/dev/null)
+if [ -n "$found" ]; then
+  root=$(printf '%s\n' "$found" | cut -f1)
+  "$root/bin/meta-os" hook "$hook" "$@" || exit $?
+else
+  strict=$(python3 "$here/resolver.py" strict 2>/dev/null) || strict=1
+  if [ "$strict" != 0 ]; then
+    echo "meta-os: $hook refused: the meta-os plugin was not found and this instance is strict." >&2
+    echo "meta-os: install the plugin in Claude Code, or set META_OS_PLUGIN_ROOT." >&2
+    exit 1
+  fi
+  echo "meta-os: the meta-os plugin was not found; its $hook check was skipped." >&2
+fi
+for part in "$top/.githooks.d/$hook"/*; do
+  case "${part##*/}" in *[!A-Za-z0-9_-]*) continue ;; esac
+  [ -f "$part" ] && [ -x "$part" ] || continue
+  "$part" "$@" || exit $?
+done
+exit 0

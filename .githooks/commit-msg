@@ -1,0 +1,4 @@
+#!/bin/sh
+# This repository's own gate: no private data in a commit message.
+top=$(git rev-parse --show-toplevel) || exit 1
+exec python3 "$top/scripts/public_safe_gate.py" commit-msg "$1"

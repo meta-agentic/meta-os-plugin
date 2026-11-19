@@ -1,0 +1,6 @@
+#!/bin/sh
+# The meta-os command. Inside a Claude Code session it is on the shell path by its bare name;
+# outside a session an instance calls it through its launcher, .meta-os/meta-os.
+# Commands Claude runs are not told where the plugin folder is, so it is found from this file.
+here=$(cd "$(dirname "$0")/.." && pwd) || exit 1
+PYTHONDONTWRITEBYTECODE=1 exec python3 "$here/scripts/meta_os_cli.py" "$@"

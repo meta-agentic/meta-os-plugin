@@ -1,0 +1,10 @@
+.DS_Store
+*.swp
+__pycache__/
+*.pyc
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+/.claude/
