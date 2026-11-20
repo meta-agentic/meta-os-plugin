@@ -116,8 +116,8 @@ jobs:
       - name: Tests
         run: uv run --no-project --python "${{ matrix.python }}" python tests/run.py
 
-  # Only when release.yml calls this file. The tag is what the marketplace entry names, so it is
-  # made here, after the checks, and never by hand. When the version asked for is not the
+  # Only when release.yml calls this file. The tag and the `release` branch the marketplace entry
+  # follows are set here, after the checks, and never by hand. When the version asked for is not the
   # manifest's, the tagged commit is one commit ahead of main and carries the new version; main
   # itself is never pushed to, and takes the version with the next pull request.
   release:
@@ -155,3 +155,7 @@ jobs:
           "$CLAUDE_BIN" plugin validate . --strict
           # Creates the annotated tag meta-os--v<version> from the manifest and pushes it.
           "$CLAUDE_BIN" plugin tag plugin --message "meta-os %s" --push
+          # The meta-agentic marketplace follows the release branch, so moving it to the new tag
+          # is what publishes the release. It is a pointer only: nothing is ever committed to it,
+          # and it is moved with force because a tagged commit can sit one commit ahead of main.
+          git push --force origin "meta-os--v${version}^{commit}:refs/heads/release"

@@ -14,8 +14,10 @@ LAUNCHER_DIR = ".meta-os"
 PLUGIN_NAME = "meta-os"
 # Until the preview listing the plugin is installed from the marketplace file inside its build
 # repository. These two values change when it is listed in the organisation's marketplace.
-MARKETPLACE = "meta-os-preview"
-MARKETPLACE_SOURCE = {"source": "github", "repo": "meta-agentic/meta-os-plugin"}
+# The plugin is listed in the meta-agentic marketplace, beside the packs; the marketplace file in
+# this repository (meta-os-preview) is only for trying a branch before it is released.
+MARKETPLACE = "meta-agentic"
+MARKETPLACE_SOURCE = {"source": "github", "repo": "meta-agentic/meta-disciplines"}
 # Packs are Claude Code plugins from the organisation's marketplace.
 PACK_MARKETPLACE = "meta-agentic"
 PACK_MARKETPLACE_SOURCE = {"source": "github", "repo": "meta-agentic/meta-disciplines"}

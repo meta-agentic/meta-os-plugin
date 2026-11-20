@@ -1,6 +1,6 @@
 {
   "name": "meta-os",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "An agentic operating layer for Claude Code and Obsidian: a repository of your own notes, project registry and memory, with the framework delivered as this plugin. Preview.",
   "author": {
     "name": "meta-agentic"

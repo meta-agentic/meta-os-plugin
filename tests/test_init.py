@@ -44,11 +44,11 @@ class InitIntoEmptyFolder(ScratchCase):
 
     def test_settings_enable_the_plugin(self):
         self.init()
-        self.assertIs(self.read_json(LOCAL_SETTINGS)["enabledPlugins"]["meta-os@meta-os-preview"], True)
+        self.assertIs(self.read_json(LOCAL_SETTINGS)["enabledPlugins"]["meta-os@meta-agentic"], True)
 
     def test_settings_name_the_marketplace(self):
         self.init()
-        self.assertIn("meta-os-preview", self.read_json(LOCAL_SETTINGS)["extraKnownMarketplaces"])
+        self.assertIn("meta-agentic", self.read_json(LOCAL_SETTINGS)["extraKnownMarketplaces"])
 
     def test_gitignore_is_written_under_its_real_name(self):
         self.init()
@@ -180,9 +180,13 @@ class Decisions(ScratchCase):
         self.init()
         self.assertIn("packs: {}\n", (self.target / ".packs.yaml").read_text(encoding="utf-8"))
 
-    def test_no_pack_leaves_the_pack_marketplace_out(self):
+    def test_without_packs_only_the_meta_agentic_marketplace_is_named(self):
         self.init()
-        self.assertNotIn("meta-agentic", self.read_json(LOCAL_SETTINGS)["extraKnownMarketplaces"])
+        self.assertEqual(list(self.read_json(LOCAL_SETTINGS)["extraKnownMarketplaces"]), ["meta-agentic"])
+
+    def test_the_plugin_and_its_packs_share_one_marketplace(self):
+        self.init("--pack", "some-pack")
+        self.assertEqual(list(self.read_json(LOCAL_SETTINGS)["extraKnownMarketplaces"]), ["meta-agentic"])
 
     def test_answers_for_a_kept_config_are_reported_as_by_hand(self):
         (self.target / "meta-os.config.json").write_text("{}", encoding="utf-8")
@@ -296,7 +300,7 @@ class Scope(ScratchCase):
 
     def test_project_scope_enables_the_plugin(self):
         self.init("--scope", "project")
-        self.assertIs(self.read_json(PROJECT_SETTINGS)["enabledPlugins"]["meta-os@meta-os-preview"], True)
+        self.assertIs(self.read_json(PROJECT_SETTINGS)["enabledPlugins"]["meta-os@meta-agentic"], True)
 
     def test_the_local_settings_file_is_not_committed(self):
         self.init()

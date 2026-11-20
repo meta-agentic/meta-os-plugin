@@ -42,9 +42,13 @@ class Manifest(unittest.TestCase):
     def test_the_marketplace_points_at_the_plugin_folder(self):
         self.assertEqual(MARKETPLACE["plugins"][0]["source"], "./plugin")
 
-    def test_the_marketplace_name_is_the_one_init_writes(self):
+    def test_init_writes_the_meta_agentic_marketplace(self):
         from meta_os.paths import MARKETPLACE as written
-        self.assertEqual(MARKETPLACE["name"], written)
+        self.assertEqual(written, "meta-agentic")
+
+    def test_the_repository_s_own_marketplace_is_only_a_preview(self):
+        from meta_os.paths import MARKETPLACE as written
+        self.assertNotEqual(MARKETPLACE["name"], written)
 
     def test_the_marketplace_does_not_take_the_organisation_s_name(self):
         self.assertNotEqual(MARKETPLACE["name"], "meta-agentic")
@@ -149,8 +153,10 @@ class Release(unittest.TestCase):
     def test_the_tag_is_made_by_the_cli_and_pushed(self):
         self.assertRegex(WORKFLOW, r"plugin tag plugin .*--push")
 
-    def test_main_is_never_pushed_to(self):
-        self.assertNotIn("git push", WORKFLOW + RELEASE)
+    def test_the_only_push_moves_the_release_branch(self):
+        pushes = [line.strip() for line in (WORKFLOW + RELEASE).splitlines() if "git push" in line]
+        self.assertEqual(len(pushes), 1, pushes)
+        self.assertIn(":refs/heads/release", pushes[0])
 
 
 class Readme(unittest.TestCase):
@@ -165,9 +171,9 @@ class Readme(unittest.TestCase):
 
 
 add_cases(Readme, "test_it_has", {
-    "the marketplace line": "claude plugin marketplace add meta-agentic/meta-os-plugin",
-    "the install line": "claude plugin install meta-os@meta-os-preview",
-    "the update line": "claude plugin update meta-os@meta-os-preview",
+    "the marketplace line": "claude plugin marketplace add meta-agentic/meta-disciplines",
+    "the install line": "claude plugin install meta-os@meta-agentic",
+    "the update line": "claude plugin update meta-os@meta-agentic",
     "the first command": "/meta-os:init",
 }, Readme.has_the_line)
 
