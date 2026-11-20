@@ -184,7 +184,7 @@ add_cases(Doctor, "test_bad_config", {
 }, Doctor.bad_config_is_a_problem)
 add_cases(Doctor, "test_bad_settings", {
     "no enabled plugins": lambda s: s.pop("enabledPlugins"),
-    "plugin switched off": lambda s: s["enabledPlugins"].update({"meta-os@meta-os-preview": False}),
+    "plugin switched off": lambda s: s["enabledPlugins"].update({"meta-os@meta-agentic": False}),
     "only another plugin": lambda s: s.update(enabledPlugins={"other@meta-os-preview": True}),
     "no marketplace": lambda s: s.pop("extraKnownMarketplaces"),
     "another marketplace only": lambda s: s.update(extraKnownMarketplaces={"elsewhere": {}}),

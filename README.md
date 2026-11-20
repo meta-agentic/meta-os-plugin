@@ -13,8 +13,8 @@ You need Claude Code, git and Python 3.9 or later.
 1. Add this repository's marketplace and install the plugin:
 
    ```
-   claude plugin marketplace add meta-agentic/meta-os-plugin
-   claude plugin install meta-os@meta-os-preview
+   claude plugin marketplace add meta-agentic/meta-disciplines
+   claude plugin install meta-os@meta-agentic
    ```
 
 2. Open Claude Code in an empty folder, or in an existing project, and run:
@@ -28,8 +28,8 @@ You need Claude Code, git and Python 3.9 or later.
 To take a newer release, update the plugin; it takes effect in the next session:
 
 ```
-claude plugin marketplace update meta-os-preview
-claude plugin update meta-os@meta-os-preview
+claude plugin marketplace update meta-agentic
+claude plugin update meta-os@meta-agentic
 ```
 
 ## What you get

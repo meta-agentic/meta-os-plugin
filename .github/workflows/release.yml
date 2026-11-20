@@ -5,7 +5,8 @@
 #
 # It runs every check of ci.yml, then writes the version into plugin/.claude-plugin/plugin.json
 # if it differs, validates strictly, and creates and pushes the tag `meta-os--v<version>` with
-# `claude plugin tag`. The marketplace entry names that tag.
+# `claude plugin tag`, then moves the `release` branch to it. The meta-agentic marketplace entry
+# follows `release`, so that move is what publishes the release; no other repository changes.
 #
 # Started by hand and not by a pushed tag: a tag pushed first would be made by hand, before
 # anything had validated the commit it names, and a published tag cannot be taken back. Here
